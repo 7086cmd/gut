@@ -38,19 +38,100 @@ For other modified commands refer to below. But most of the git commands are jus
 
 ## Full Features
 
-- Automatically infer git subcommands from short abbreviations or typos
-- `gut commit` takes the last argument as the commit message, so you don't need the `-m` anymore
-- Automatically format commit messages: write `feat:xxx` or `feat(scope):xxx` and gut converts it to `feat: <emoji>  xxx` or `feat(scope): <emoji> xxx`
-- Supports many conventional commit types (feat, fix, docs, refactor, test, chore, build, style, ci, perf, revert) and custom types via config
-- Supports commit message formatting modes: `upper_case`/`lower_case` (configurable)
-- Supports custom emoji mapping for commit types ("footer") via `gut.config.json`
-- Create a repo via a 'template' (clone a repo, delete .git, re-init)
-- `gut branch` auto-switches to the created branch
-- `gut log` outputs a dense, configurable log (default: latest 10, short id + message, info level configurable)
-- `gut rlog` outputs a reversed log, following `log` config
-- `gut tlog` outputs a tree log: latest N commits from all branches, current branch ranked first, dense or detailed (configurable)
-- Configurable global git hooks via `gut.config.json` (auto-generated in `.git/hooks`)
-- Other commands not changed by gut are passed directly to git with only typo /abbr inference.
+### Smart Git Workflow
+- **Automatically infer git subcommands** from short abbreviations or typos
+- **Colorized output** throughout for better readability
+- **Better error messages** with helpful suggestions
+
+### Enhanced Commit Experience
+- **Interactive commit mode**: Just run `gut commit` with no arguments to enter interactive mode
+- **Direct commit**: `gut commit <message>` - last argument is the commit message (no `-m` needed)
+- **Auto-format commit messages**: Write `feat:xxx` or `feat(scope):xxx` and gut converts it to `feat: ✨ xxx` or `feat(scope): ✨ xxx`
+- **Supports many conventional commit types**: feat, fix, docs, refactor, test, chore, build, style, ci, perf, revert
+- **Custom emoji mapping** for commit types via `gut.config.json`
+- **Commit message formatting modes**: `upper_case`/`lower_case` (configurable)
+
+### Smart Undo Operations
+- **`gut undo commit`**: Undo last commit (keep changes in staging)
+- **`gut undo commit-hard`**: Undo last commit and discard changes (with confirmation)
+- **`gut undo stage`**: Unstage all files
+- **`gut undo changes`**: Discard all working changes (with confirmation)
+
+### Better Stash Management
+- **`gut save [message]`**: Save changes with an optional message (better than `git stash`)
+- **`gut pop`**: Restore saved changes (better than `git stash pop`)
+
+### Secret Protection
+- **`gut remove-committed <files...>`**: Remove accidentally committed sensitive files (API keys, .env, etc.)
+  - Automatically gets the last commit message
+  - Resets the commit (keeping changes)
+  - Removes specified files from git tracking
+  - Re-commits without the sensitive files
+  - Provides helpful reminders about .gitignore and secret rotation
+
+### Log & Branch Management
+- **`gut branch <name>`**: Create and auto-switch to a new branch
+- **`gut log`**: Dense, configurable log (default: latest 10, short id + message)
+- **`gut rlog`**: Reversed log, following `log` config
+- **`gut tlog`**: Tree log showing latest N commits from all branches (current branch first)
+
+### Template Repositories
+- **`gut template <url> [dest]`**: Clone a repo as template (remove .git, re-init)
+
+### Configuration & Hooks
+- **Configurable global git hooks** via `gut.config.json` (auto-generated in `.git/hooks`)
+- **Configuration validation** with helpful error messages
+- All other git commands pass through with typo/abbreviation inference
+
+## Quick Examples
+
+### Interactive Commit
+```bash
+gut commit
+# Prompts: Enter commit message (or use conventional format like 'feat: description')
+# > feat: add user authentication
+# ℹ Commit message: feat: ✨ add user authentication
+# ✓ Commit created successfully!
+```
+
+### Quick Conventional Commit
+```bash
+gut commit "feat: add login page"
+# Automatically formatted to: feat: ✨ add login page
+```
+
+### Undo Last Commit
+```bash
+gut undo commit
+# Undoes last commit but keeps all changes in staging area
+```
+
+### Save Work in Progress
+```bash
+gut save "working on authentication feature"
+# Later...
+gut pop
+# Restores your saved changes
+```
+
+### Remove Accidentally Committed Secret
+```bash
+# Oops! Committed .env file with API keys
+gut remove-committed .env
+# Automatically:
+# 1. Gets last commit message
+# 2. Resets commit (keeps changes)
+# 3. Removes .env from git
+# 4. Re-commits without .env
+# 5. Reminds you to add .env to .gitignore and rotate keys
+```
+
+### Smart Command Inference
+```bash
+gut comit "fix: typo"  # Infers 'commit'
+gut sttus              # Infers 'status'
+gut chckout main       # Infers 'checkout'
+```
 
 ## Configuration (`gut.config.json`)
 

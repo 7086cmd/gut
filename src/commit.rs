@@ -1,12 +1,28 @@
 use serde_json::Value;
 use crate::utils::pass_to_git;
+use crate::colors::{error, success, info, bold, highlight};
+use std::io::{self, Write};
 
 pub fn gut_commit(args: &[String], config: &Value) {
-    if args.is_empty() {
-        eprintln!("gut commit <msg>");
-        std::process::exit(1);
-    }
-    let msg = &args[args.len() - 1];
+    // Interactive mode if no message provided
+    let msg = if args.is_empty() {
+        println!("{}", bold("Interactive Commit Mode"));
+        println!("\nEnter commit message (or use conventional format like 'feat: description'):");
+        print!("> ");
+        io::stdout().flush().unwrap();
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            eprintln!("{}", error("Commit message cannot be empty"));
+            std::process::exit(1);
+        }
+        trimmed.to_string()
+    } else {
+        args[args.len() - 1].clone()
+    };
+
+    let msg = &msg;
     // Conventional commit is required unless format_mode is set
     let skip_conventional = config.get("commit")
         .and_then(|c| c.get("format_mode"))
@@ -14,15 +30,25 @@ pub fn gut_commit(args: &[String], config: &Value) {
         .map(|mode| mode == "upper_case" || mode == "lower_case")
         .unwrap_or(false);
     if !skip_conventional && !is_conventional_commit(msg) {
-        eprintln!("[gut] conventional commit is required (e.g. 'feat: add some new features' or 'fix(scope): fix some issues')");
+        eprintln!("{}", error("Conventional commit format required"));
+        eprintln!("\nExamples:");
+        eprintln!("  {} Add a new feature", highlight("feat: description"));
+        eprintln!("  {} Fix a bug", highlight("fix: description"));
+        eprintln!("  {} Update documentation", highlight("docs: description"));
+        eprintln!("  {} Add scope information", highlight("feat(scope): description"));
         std::process::exit(1);
     }
     let formatted = format_commit_message(msg, config);
-    let mut git_args = vec!["commit".to_string(), "-m".to_string(), formatted];
-    if args.len() > 1 {
+
+    // Show what will be committed
+    println!("{}", info(&format!("Commit message: {}", formatted)));
+
+    let mut git_args = vec!["commit".to_string(), "-m".to_string(), formatted.clone()];
+    if !args.is_empty() && args.len() > 1 {
         git_args.splice(1..1, args[..args.len()-1].to_vec());
     }
     pass_to_git(&git_args);
+    println!("{}", success("Commit created successfully!"));
 }
 
 fn is_conventional_commit(msg: &str) -> bool {
